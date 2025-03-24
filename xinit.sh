@@ -151,6 +151,7 @@ fi
 if [ ! -d $XROOT/$XENOS ]; then
     if [ ! -d $XROOT/$distro ]; then
         proot-distro install $distro > /dev/null 2>&1
+        proot-distro rename $distro $XENOS
     else
         reset_distro $distro
     fi
