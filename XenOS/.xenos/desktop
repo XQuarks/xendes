@@ -1,0 +1,9 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+apt update && apt upgrade -y
+
+clear
+
+apt install xfce4 xfce4-terminal firefox dbus-x11 -y
+
+clear
