@@ -15,6 +15,7 @@
 packages="apt dnf apk"
 
 pkg upgrade -y
+pkg install ncurses-utils
 
 # color variable
 red=$(tput setaf 1) green=$(tput setaf 2)
