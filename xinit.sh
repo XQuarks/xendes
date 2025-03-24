@@ -14,8 +14,6 @@
 # supported package managers
 packages="apt dnf apk"
 
-# set -e
-
 # color variable
 red=$(tput setaf 1) green=$(tput setaf 2)
 yellow=$(tput setaf 3) blue=$(tput setaf 4)
@@ -64,6 +62,11 @@ if [ -z "$package" ]; then
 fi
 
 echo "${yellow}Setting up storage...${reset}"
+if [ -z "$(command -v termux-setup-storage)" ]; then
+    echo "${red}termux-setup-storage not found${reset}"
+    exit 1
+fi
+
 termux-setup-storage
 
 # update packages & package installations
@@ -170,24 +173,27 @@ else
     fi
 fi
 
-# curl -sSL https://raw.githubusercontent.com/XQuarks/xendes/main/${type}.sh
-
 # end of distro creation
 echo "${green}Distro created successfully${reset}"
 
 # start the distro
 echo "${yellow}Initializing the distro...${reset}"
 
-proot-distro login $XENOS
+proot-distro login $XENOS --shared-tmp -- /bin/sh -c "curl -sSL https://raw.githubusercontent.com/XQuarks/xendes/main/${type}.sh | sh"
 
 if [ $? -ne 0 ]; then
     echo "${red}Failed to initialize the distro${reset}"
     exit 1
 fi
 
+echo -e "#!/bin/sh
+proot-distro login $XENOS --shared-tmp -- /bin/zsh
+" > $PREFIX/bin/$XENOS
+chmod +x $PREFIX/bin/$XENOS
+
 echo "${green}Starting the distro${reset}"
 
-proot-distro login $XENOS
+$PREFIX/bin/$XENOS
 
 if [ $? -ne 0 ]; then
     echo "${red}Failed to start the distro${reset}"

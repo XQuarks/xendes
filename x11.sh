@@ -18,8 +18,6 @@ os="debian"
 # supported package managers
 packages="apt dnf apk"
 
-# set -e
-
 # color variable
 red=$(tput setaf 1) green=$(tput setaf 2)
 yellow=$(tput setaf 3) blue=$(tput setaf 4)
@@ -53,6 +51,32 @@ if [ -z "$package" ]; then
     exit 1
 fi
 
+if [ ! -x "$(command -v $package)" ]; then
+    echo "${red}No supported package manager found${reset}"
+    exit 1
+fi
+
+# show available details
+echo "${cyan}Details:${reset}"
+echo "  ${cyan}OS:${reset} $os"
+echo "  ${cyan}Package Manager:${reset} $package"
+echo "  ${cyan}User:${reset} $(whoami)"
+
+case $os in
+    debian)
+        ;;
+    ubuntu)
+        ;;
+    fedora)
+        ;;
+    alpine)
+        ;;
+    *)
+        echo "${red}Unsupported OS${reset}"
+        exit 1
+        ;;
+esac
+
 # update packages
 echo "Updating packages..."
 
@@ -75,13 +99,7 @@ if [ $add_user = "y" ]; then
 fi
 
 # # install packages
-# ${package} install sudo dbus-x11 xwayland xfce4 xfce4-terminal pulseaudio curl zsh git gh make build-essential neovim -y > /dev/null
-
-# # sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
-# if [ $add_user = "y" ]; then
-#     su - $username -c "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
-# fi
+${package} install sudo dbus-x11 xwayland xfce4 xfce4-terminal pulseaudio curl zsh git gh make build-essential neovim -y > /dev/null
 
 sleep 2
 exit
