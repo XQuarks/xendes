@@ -14,6 +14,8 @@
 # supported package managers
 packages="apt dnf apk"
 
+apt update > /dev/null 2>&1 && apt upgrade -y > /dev/null 2>&1
+
 # color variable
 red=$(tput setaf 1) green=$(tput setaf 2)
 yellow=$(tput setaf 3) blue=$(tput setaf 4)
@@ -72,7 +74,7 @@ termux-setup-storage
 # update packages & package installations
 echo "${yellow}Installing packages...${reset}"
 
-${package} update && ${package} upgrade -y > /dev/null 2>&1
+${package} update > /dev/null 2>&1 && ${package} upgrade -y > /dev/null 2>&1
 ${package} install proot-distro -y > /dev/null 2>&1
 
 if [ $? -ne 0 ]; then
