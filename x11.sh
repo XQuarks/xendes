@@ -81,6 +81,7 @@ esac
 echo "Updating packages..."
 
 ${package} update && ${package} upgrade -y > /dev/null
+apt install zsh -y
 
 # add user
 read -p "Do you want add a new user? (y/n) [n]: " add_user
