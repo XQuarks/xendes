@@ -11,11 +11,18 @@
 # supported distros
 # distros="debian ubuntu fedora alpine"
 
-# supported package managers
-packages="apt dnf apk"
+if [ -z "$(command -v pkg)" ]; then
+    echo "pkg package manager not found"
+    exit 1
+fi
+
+# update packages
+echo "Updating packages..."
 
 pkg upgrade -y
-pkg install ncurses-utils
+pkg install ncurses-utils -y
+
+echo "Packages updated"
 
 # color variable
 red=$(tput setaf 1) green=$(tput setaf 2)
@@ -52,18 +59,6 @@ case $type in
         ;;
 esac
 
-# get package manager
-for package in $packages; do
-    if [ -x "$(command -v $package)" ]; then
-        break
-    fi
-done
-
-if [ -z "$package" ]; then
-    echo "${red}No supported package manager found${reset}"
-    exit 1
-fi
-
 echo "${yellow}Setting up storage...${reset}"
 if [ -z "$(command -v termux-setup-storage)" ]; then
     echo "${red}termux-setup-storage not found${reset}"
@@ -75,7 +70,7 @@ termux-setup-storage
 # update packages & package installations
 echo "${yellow}Installing packages...${reset}"
 
-${package} install proot-distro -y > /dev/null 2>&1
+pkg install proot-distro -y > /dev/null 2>&1
 
 if [ $? -ne 0 ]; then
     echo "${red}Failed to install the proot-distro${reset}"
@@ -88,8 +83,8 @@ if [ -z "$(command -v proot-distro)" ]; then
 fi
 
 if [ $type = "x11" ]; then
-    ${package} install x11-repo -y > /dev/null 2>&1
-    ${package} install xorg-xrandr termux-x11-nightly pulseaudio -y > /dev/null 2>&1
+    pkg install x11-repo -y > /dev/null 2>&1
+    pkg install xorg-xrandr termux-x11-nightly pulseaudio -y > /dev/null 2>&1
 fi
 
 # end of installation
@@ -103,7 +98,7 @@ reset_distro() {
     
     echo "${yellow}Resetting ${distro}...${reset}"
 
-    read -p "Do you want to backup the distro? [y/n] [y]: " backup
+    read -p "Do you want to backup the $distro? [y/n] [y]: " backup
     if [ $backup -ne "n" ]; then
         proot-distro backup $distro --output-file $XROOT/$distro-backup > /dev/null 2>&1
 
@@ -151,9 +146,14 @@ fi
 if [ ! -d $XROOT/$XENOS ]; then
     if [ ! -d $XROOT/$distro ]; then
         proot-distro install $distro > /dev/null 2>&1
-        proot-distro rename $distro $XENOS
+        proot-distro rename $distro $XENOS > /dev/null 2>&1
     else
         reset_distro $distro
+
+        read -p "Do you want to restore the $distro? [y/n] [y]: " restore
+        if [ $restore -ne "n" ]; then
+            proot-distro restore $XROOT/$distro-backup > /dev/null 2>&1
+        fi
     fi
 else
     read -p "The distro $XENOS already exists. Do you want to reset it? [y/n] [y]: " reset
@@ -165,15 +165,6 @@ fi
 if [  $? -ne 0 ]; then
     echo "${red}Failed to create the distro${reset}"
     exit 1
-else
-    echo "${green}Distro has been created${reset}"
-
-    if [ $distro != $XENOS -a -e $XROOT/$distro-backup ]; then
-        read -p "Do you want to restore the backup? [y/n] [y]: " restore
-        if [ $restore -ne "n" ]; then
-            proot-distro restore $XROOT/$distro-backup > /dev/null 2>&1
-        fi
-    fi
 fi
 
 # end of distro creation
@@ -182,25 +173,26 @@ echo "${green}Distro created successfully${reset}"
 # start the distro
 echo "${yellow}Initializing the distro...${reset}"
 
-proot-distro login $XENOS --shared-tmp -- /bin/sh -c "curl -sSL https://raw.githubusercontent.com/XQuarks/xendes/main/${type}.sh | sh"
+proot-distro login $XENOS --shared-tmp -- /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/XQuarks/xendes/main/${type}.sh)"
 
 if [ $? -ne 0 ]; then
     echo "${red}Failed to initialize the distro${reset}"
     exit 1
 fi
 
-echo -e "#!/bin/sh
-proot-distro login $XENOS --shared-tmp -- /bin/zsh
-" > $PREFIX/bin/$XENOS
-chmod +x $PREFIX/bin/$XENOS
+# if [ $type = "x11" ]; then
+#     echo -e "" > $PREFIX/bin/$XENOS
+# fi
 
-echo "${green}Starting the distro${reset}"
+# chmod +x $PREFIX/bin/$XENOS
 
-$PREFIX/bin/$XENOS
+# echo "${green}Starting the distro${reset}"
 
-if [ $? -ne 0 ]; then
-    echo "${red}Failed to start the distro${reset}"
-    exit 1
+# $PREFIX/bin/$XENOS
+
+# if [ $? -ne 0 ]; then
+#     echo "${red}Failed to start the distro${reset}"
+#     exit 1
 fi
 
 sleep 2
